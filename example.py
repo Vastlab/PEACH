@@ -8,7 +8,7 @@ from sklearn import metrics
 
 ########Get data###############
 from torchvision import datasets, transforms
-h = h5py.File('features/mnist_LeNet.hdf5')
+h = h5py.File('mnist_LeNet.hdf5')
 features = h["features"]
 features = np.array(features, dtype = float)
 
