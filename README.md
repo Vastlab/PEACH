@@ -9,4 +9,4 @@ Python Flann is required: pip install pyflann-py3
 
 How to use please see example.py
 
-Set no_singleton == True will cluster all samples.
+Set no_singleton == True will cluster all samples (and take longer).
