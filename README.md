@@ -1,5 +1,5 @@
 # FACTO
-FACTO Clustering
+FACTO Autonomous Clustering
 
 Based on Pytorch and Flann
 
