@@ -7,7 +7,7 @@ Requirement: Python3, Pytorch, PyFlann, Scikit-learn, SciPy is required.
 
 Python Flann: "pip install pyflann-py3"
 
-Example: "python example.py" 
+Example MNIST: "python example.py" 
 
 Set "no_singleton = True" will cluster all samples (and take longer).
 
