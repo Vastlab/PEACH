@@ -1,14 +1,10 @@
 import numpy as np
-import threading
 import math
 import random
 import torch
 import torch.nn as nn
 import weibull as weibull
-import itertools
 import scipy
-import sklearn
-import csv
 from sklearn.preprocessing import Normalizer
 from pyflann import *
 from collections import Counter
