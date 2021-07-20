@@ -1,24 +1,10 @@
-##!/home/cli/anaconda3/lib/python3.7
 import numpy as np
-import csv
-import math
 import os, sys
-import h5py
-import argparse
 import scipy
-import sklearn
 import random
 import time
-import itertools
-import scipy.io
 import collections
 import threading
-import bcubed
-from sklearn.preprocessing import normalize
-import weibull
-import torch
-import copy
-from sklearn import preprocessing
 from sklearn.preprocessing import Normalizer
 from pyflann import *
 
@@ -136,7 +122,3 @@ def thread(threads):
         t.join()
 if __name__ == '__main__':
     main()
-
-
-
-
