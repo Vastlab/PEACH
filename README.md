@@ -10,3 +10,5 @@ Python Flann: "pip install pyflann-py3"
 Example: "python example.py" 
 
 Set "no_singleton = True" will cluster all samples (and take longer).
+
+Computing Cost: Cluster whole ImageNet2021 within 30 mins on single TITAN V
