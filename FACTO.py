@@ -1,16 +1,34 @@
+##!/home/cli/anaconda3/lib/python3.7
 import numpy as np
+import csv
+import math
 import os, sys
+import h5py
+import argparse
 import scipy
+import sklearn
 import random
 import time
+import itertools
+import scipy.io
 import collections
 import threading
+import bcubed
+from sklearn.preprocessing import normalize
+import weibull
+import torch
+import copy
+from sklearn import preprocessing
 from sklearn.preprocessing import Normalizer
+from sklearn.decomposition import PCA
 from pyflann import *
 
 
 
 def FACTO(features, gpu, no_singleton = False):
+    pca = PCA(n_components=128, whiten=False)
+    pca.fit(features)
+    features = pca.transform(features)
     points = features
     print("FACTO Start")
     length = len(points)
@@ -122,3 +140,7 @@ def thread(threads):
         t.join()
 if __name__ == '__main__':
     main()
+
+
+
+
