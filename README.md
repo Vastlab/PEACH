@@ -3,7 +3,7 @@ FACTO Autonomous Clustering
 
 Based on Pytorch and Flann
 
-Requirement: Python3, Pytorch, PyFlann, Scikit-learn, SciPy is required.
+Requirement: Python3, Pytorch, PyFlann, Scikit-learn, SciPy.
 
 Python Flann: "pip install pyflann-py3"
 
