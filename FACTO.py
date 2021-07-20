@@ -103,6 +103,9 @@ def FACTO(features,gpu):
     from evaluate import convert_clusters_to_label
     labels = np.array(convert_clusters_to_label(clusters, length))
     print("FACTO Done")
+    true_clusters = [i for i in result_clusters if len(i) != 1]
+    single = len(result_clusters) - len(true_clusters)
+    print("True Clusters: ", len(true_clusters), "Singletons: ", single)
     return labels
 
 

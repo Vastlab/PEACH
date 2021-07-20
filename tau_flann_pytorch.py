@@ -28,9 +28,9 @@ def euclidean(x, y):
 ##################Tau-Simple###################################
 ################################################################
 def tolerance(features, gpu):
-    # Use up to 10000 simples to compute tau
-    if len(features) >= 10000:
-        select_features = np.array(random.choices(features, k = 10000))
+    # Use up to 20000 simples to compute tau
+    if len(features) >= 20000:
+        select_features = np.array(random.choices(features, k = 20000))
     else:
         select_features = features
 
