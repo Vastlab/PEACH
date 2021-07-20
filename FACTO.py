@@ -24,7 +24,7 @@ from pyflann import *
 
 
 
-def FACTO(features,gpu):
+def FACTO(features, gpu, no_singleton = False):
     points = features
     print("FACTO Start")
     length = len(points)
@@ -98,13 +98,23 @@ def FACTO(features,gpu):
             break
         clusters = result_clusters
         round += 1
-    clusters = result_clusters
-    
+    #clusters = result_clusters
+
+    if no_singleton == True:
+        true_clusters = [i for i in result_clusters if len(i) != 1]
+        singletons = [k for k in clusters if len(k) == 1]
+        centroids = [np.mean(cluster) for cluster in true_clusters]
+        for single in singletons:
+            dis = [scipy.spatial.distance.cosine(single, centroid) for centroid_id, centroid in enumerate(centroids)]
+            index = np.argsort(dis)[0]
+            true_clusters[index].extend(single)
+        clusters = true_clusters
+
     from evaluate import convert_clusters_to_label
     labels = np.array(convert_clusters_to_label(clusters, length))
     print("FACTO Done")
-    true_clusters = [i for i in result_clusters if len(i) != 1]
-    single = len(result_clusters) - len(true_clusters)
+    true_clusters = [i for i in clusters if len(i) != 1]
+    single = len(clusters) - len(true_clusters)
     print("True Clusters: ", len(true_clusters), "Singletons: ", single)
     return labels
 
