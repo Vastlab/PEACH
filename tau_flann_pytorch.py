@@ -1,10 +1,14 @@
 import numpy as np
+import threading
 import math
 import random
 import torch
 import torch.nn as nn
 import weibull as weibull
+import itertools
 import scipy
+import sklearn
+import csv
 from sklearn.preprocessing import Normalizer
 from pyflann import *
 from collections import Counter
@@ -23,7 +27,7 @@ def euclidean(x, y):
 ################################################################
 ##################Tau-Simple###################################
 ################################################################
-def tolerance(features, gpu):
+def tolerance(features, gpu, metric):
     # Use up to 20000 simples to compute tau
     if len(features) >= 20000:
         select_features = np.array(random.choices(features, k = 20000))
@@ -36,7 +40,10 @@ def tolerance(features, gpu):
     torch.cuda.set_device(gpu)
     X_global = torch.tensor(select_features).cuda()
     Y_global = torch.tensor(select_features).cuda()
-    distances = cosine(X_global, Y_global)
+    if metric == "cosine":
+        distances = cosine(X_global, Y_global)
+    elif metric == "euclidean":
+        distances = euclidean(X_global, Y_global)
     distances = distances.cpu().numpy()
     total_distances.append(np.median(distances))
     max_dis.append(np.max(distances))
@@ -95,7 +102,10 @@ def tolerance(features, gpu):
         features1 = [features[k] for k in pair2] #extract features of cluster1
         centroid0 = np.mean(features0, axis=0) # Get controid of cluster0
         centroid1 = np.mean(features1, axis=0) # Get controid of cluster1
-        gx = scipy.spatial.distance.cosine(centroid0, centroid1) * 1
+        if metric == "cosine":
+            gx = scipy.spatial.distance.cosine(centroid0, centroid1)
+        elif metric == "euclidean":
+            gx = scipy.spatial.distance.euclidean(centroid0, centroid1)
         gxs.append(gx)
     name = 'name'
     #tau = get_tau(torch.Tensor(nearest_points_dis),1,name,tailfrac=1,pcent=.999,usehigh=True,maxmodeerror=1)* avg_all_distances / max(max_dis)

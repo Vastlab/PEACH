@@ -10,7 +10,7 @@ from sklearn.decomposition import PCA
 from pyflann import *
 
 
-def FACTO(features, gpu, no_singleton=False):
+def FACTO(features, gpu, metric="cosine", no_singleton=False):
     if features.shape[1] > 128:
         pca = PCA(n_components=128, whiten=False)
         pca.fit(features)
@@ -21,7 +21,7 @@ def FACTO(features, gpu, no_singleton=False):
     from tau_flann_pytorch import tolerance
     # Get threshold
     percent_t, T, estimated_gap, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis, avg_pairs_gap, weight = tolerance(
-        features, gpu)
+        features, gpu, metric)
     ################################################################################################
     clusters = [[i] for i in range(length)]
 
@@ -83,7 +83,7 @@ def FACTO(features, gpu, no_singleton=False):
         for i in clusters:
             old_clusters.add(tuple(i))  # find old (last round) clusters
         from merge import merging
-        clusters = merging(merging_list, clusters, estimated_gap, features, round)
+        clusters = merging(merging_list, clusters, estimated_gap, features, round, metric)
         # rembember old and new clusters
         result_clusters = [k for k in clusters if len(k) != 0]
         #########################################################################################

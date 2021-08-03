@@ -5,7 +5,7 @@ import math
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-def merging(merging_list, clusters, init_tau, features, cluster_round):
+def merging(merging_list, clusters, init_tau, features, cluster_round, metric):
     for i in merging_list: # Merge by merging list
         cluster0 = tuple(clusters[i[0]])  # points inside cluster0
         cluster1 = tuple(clusters[i[1]])
@@ -16,9 +16,11 @@ def merging(merging_list, clusters, init_tau, features, cluster_round):
 
         centroid0 = np.mean(features0, axis=0) # Get controid of cluster0
         centroid1 = np.mean(features1, axis=0) # Get controid of cluster1
-        
-        gap = scipy.spatial.distance.cosine(centroid0, centroid1)
 
+        if metric == "cosine":
+            gap = scipy.spatial.distance.cosine(centroid0, centroid1)
+        elif metric == "euclidean":
+            gap = scipy.spatial.distance.euclidean(centroid0, centroid1)
         if cluster_round == 0:
             if gap <= init_tau: #cluster0 and cluster 1 will be merged if their gap smaller than tau
                 clusters[i[0]].extend(clusters[i[1]])
