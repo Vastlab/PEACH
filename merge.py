@@ -33,3 +33,28 @@ def merging(merging_list, clusters, init_tau, features, cluster_round, metric):
     return clusters
 
 
+def merging_combine(merging_list, clusters, tau_cos, tau_eu, features, cluster_round, metric, method):
+    for i in merging_list:  # Merge by merging list
+        cluster0 = tuple(clusters[i[0]])  # points inside cluster0
+        cluster1 = tuple(clusters[i[1]])
+        if len(cluster0) != 0 and len(cluster1) != 0:
+            features0 = [features[k] for k in cluster0]  # extract features of cluster0
+            features1 = [features[k] for k in cluster1]  # extract features of cluster1
+            #########################################################################
+            centroid0 = np.mean(features0, axis=0)  # Get controid of cluster0
+            centroid1 = np.mean(features1, axis=0)  # Get controid of cluster1
+            gap_cos = scipy.spatial.distance.cosine(centroid0, centroid1)
+            gap_eu = scipy.spatial.distance.euclidean(centroid0, centroid1)
+
+            if method == "OR":
+                if gap_cos <= tau_cos or gap_eu <= tau_eu:
+                    clusters[i[0]].extend(clusters[i[1]])
+                    clusters[i[1]] = []
+            elif method == "AND":
+                if gap_cos <= tau_cos and gap_eu <= tau_eu:
+                    clusters[i[0]].extend(clusters[i[1]])
+                    clusters[i[1]] = []
+
+    return clusters
+
+

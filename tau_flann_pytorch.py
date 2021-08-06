@@ -35,20 +35,50 @@ def tolerance(features, gpu, metric):
         select_features = features
 
 ############################################
-    total_distances = []
-    max_dis = []
+
     torch.cuda.set_device(gpu)
     X_global = torch.tensor(select_features).cuda()
     Y_global = torch.tensor(select_features).cuda()
     if metric == "cosine":
         distances = cosine(X_global, Y_global)
+        distances = distances.cpu().numpy()
+        tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis = compute_tau(distances, features, metric)
+        return tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis
     elif metric == "euclidean":
         distances = euclidean(X_global, Y_global)
-    distances = distances.cpu().numpy()
+        distances = distances.cpu().numpy()
+        tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis = compute_tau(distances, features, metric)
+        return tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis
+    elif metric == "cosine+euclidean":
+        cosine_distances = cosine(X_global, Y_global)
+        cosine_distances = cosine_distances.cpu().numpy()
+        euclidean_distances = euclidean(X_global, Y_global)
+        euclidean_distances = euclidean_distances.cpu().numpy()
+        """
+        def ned(x1, x2, dim=1, eps=1e-8):
+            ned_2 = 0.5 * ((x1 - x2).var(dim=dim) / (x1.var(dim=dim) + x2.var(dim=dim) + eps))
+            return ned_2 ** 0.5
+        def nes(x1, x2, dim=1, eps=1e-8):
+            return 1 - ned(x1, x2, dim, eps)
+        dim = -2
+        ned_tensor = ned(torch.tensor(euclidean_distances).cuda(), torch.tensor(cosine_distances).cuda(), dim=dim)
+        tra = Normalizer(norm='l2').fit(euclidean_distances)
+        X = tra.transform(euclidean_distances)
+        """
+        tau_cos, nearest_points_cos, init_length_cos, nearest_cluster_with_distance_round_1_cos, nearest_points_dis_cos = compute_tau(cosine_distances, features, "cosine")
+        tau_eu, nearest_points_eu, init_length_eu, nearest_cluster_with_distance_round_1_eu, nearest_points_dis_eu = compute_tau(euclidean_distances, features, "euclidean")
+        return tau_cos,tau_eu,nearest_points_cos,nearest_points_eu,init_length_cos,init_length_eu,nearest_cluster_with_distance_round_1_cos,nearest_cluster_with_distance_round_1_eu,nearest_points_dis_cos,nearest_points_dis_eu
+    #return 0, 0, tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis, 0, 0
+
+
+def compute_tau(distances, features, metric):
+    #distances = distances.cpu().numpy()
+    total_distances = []
+    max_dis = []
     total_distances.append(np.median(distances))
     max_dis.append(np.max(distances))
-    del X_global, Y_global
-################################################
+    #del X_global, Y_global
+    ################################################
     avg_all_distances = np.median(total_distances)
     tra = Normalizer(norm='l2').fit(features)
     X = tra.transform(features)
@@ -60,8 +90,7 @@ def tolerance(features, gpu, metric):
     nearest_points = nearest_cluster
     nearest_cluster_with_distance_round_1 = [[j, [k, i]] for k, (i, j) in enumerate(zip(nearest_cluster, nearest_points_dis))]
     nearest_cluster_with_distance_round_1 = sorted(nearest_cluster_with_distance_round_1)
-        
-        
+
     ########################################################################################
     appear = dict(Counter(nearest_points))
     appear_count = [[j, i] for i, j in enumerate(appear)]
@@ -82,8 +111,6 @@ def tolerance(features, gpu, metric):
     init_length = N
     init_features = [[features[i[0]], features[i[1]]] for i in init] #features of initial groups.
     ######################################################################################################
-
-    #print("Computing Nearest init groups")
     centroids = [np.mean(i,axis=0) for i in init_features]
     tra = Normalizer(norm='l2').fit(centroids)
     X = tra.transform(centroids)
@@ -92,11 +119,9 @@ def tolerance(features, gpu, metric):
     nearest_init = np.array([cls[1] for cls in result])
 
     ##########################################################################################################
-    #print("Computing tolerance")
     nearest_init_combo = [[m, init[n]] for m, n in zip(init, nearest_init)]
     ########################################################################################
     gxs = []
-    #print("Computing taus")
     for pair1, pair2 in nearest_init_combo:
         features0 = [features[k] for k in pair1] #extract features of cluster0
         features1 = [features[k] for k in pair2] #extract features of cluster1
@@ -107,10 +132,10 @@ def tolerance(features, gpu, metric):
         elif metric == "euclidean":
             gx = scipy.spatial.distance.euclidean(centroid0, centroid1)
         gxs.append(gx)
-    name = 'name'
-    #tau = get_tau(torch.Tensor(nearest_points_dis),1,name,tailfrac=1,pcent=.999,usehigh=True,maxmodeerror=1)* avg_all_distances / max(max_dis)
+
+    #tau = get_tau(torch.Tensor(nearest_points_dis),1,'name',tailfrac=1,pcent=.999,usehigh=True,maxmodeerror=1)* avg_all_distances / max(max_dis)
     tau = max(gxs) * avg_all_distances / max(max_dis)
-    return 0, 0, tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis, 0, 0
+    return tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis
     
 def nan_to_num(t,mynan=0.):
     if torch.all(torch.isfinite(t)):
