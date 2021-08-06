@@ -5,6 +5,8 @@ import random
 import time
 import collections
 import threading
+import torch
+import torch.nn as nn
 from sklearn.preprocessing import Normalizer
 from sklearn.decomposition import PCA
 from pyflann import *
@@ -12,11 +14,28 @@ from tau_flann_pytorch import tolerance
 from merge import merging, merging_combine, merging_combine_sum
 from evaluate import convert_clusters_to_label
 
+
+def cosine(x, y):
+    x = nn.functional.normalize(x, dim=1)
+    y = nn.functional.normalize(y, dim=1)
+    similarity = torch.einsum('nc,ck->nk', [x, y.T])
+    distances = 1 - similarity
+    return distances
+
+
+def euclidean(x, y):
+    distances = torch.cdist(x, y, p=2.0, compute_mode='donot_use_mm_for_euclid_dist')
+    return distances
+
 def FACTO(features, gpu, metric="SUM", method = "SUM", no_singleton=False):
+    torch.cuda.set_device(gpu)
     if features.shape[1] > 128:
-        pca = PCA(n_components=128, whiten=False)
-        pca.fit(features)
-        features = pca.transform(features)
+        try:
+            pca = PCA(n_components=128, whiten=False)
+            pca.fit(features)
+            features = pca.transform(features)
+        except:
+            pass
     points = features
     print("FACTO Start")
     length = len(points)
@@ -49,8 +68,6 @@ def FACTO(features, gpu, metric="SUM", method = "SUM", no_singleton=False):
                     nearest_cluster_cos.append(m[1][1])
                 for m in sorted(nearest_cluster_with_distance_eu, key=takeSecond):
                     nearest_cluster_eu.append(m[1][1])
-                #print(len(nearest_cluster_cos))
-                #print(len(nearest_cluster_eu))
                 nearest_cluster = []
                 ###############################AND################################
                 processed = set()
@@ -66,11 +83,9 @@ def FACTO(features, gpu, metric="SUM", method = "SUM", no_singleton=False):
                         if a == b:
                             nearest_cluster.append(a)
                 ##################################################################
-                #print(len(nearest_cluster))
                 merging_list = set()
                 for m, n in enumerate(nearest_cluster):
                     merging_list.add(tuple((m, n)))
-                #print(merging_list)
 
             else:
                 nearest_cluster_with_distance = nearest_cluster_with_distance_round_1
@@ -99,12 +114,17 @@ def FACTO(features, gpu, metric="SUM", method = "SUM", no_singleton=False):
             centroids = [np.mean([points[j] for j in i], axis=0) for i in clusters]
             X = np.array(centroids)
             ###############################################################################################
+
+
             tra = Normalizer(norm='l2').fit(X)
             X = tra.transform(X)
             flann = FLANN()
             result, result_dis = flann.nn(X, X, num_neighbors=2, algorithm="kdtree", trees=8, checks=128)
             nearest_cluster = np.array([cls[1] for cls in result])
             nearest_cluster_dis = np.array([dis[1] for dis in result_dis])
+
+
+
             nearest_cluster_with_distance = [[j, [k, i]] for k, (i, j) in
                                              enumerate(zip(nearest_cluster, nearest_cluster_dis))]
 
