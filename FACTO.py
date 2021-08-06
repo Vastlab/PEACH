@@ -9,10 +9,10 @@ from sklearn.preprocessing import Normalizer
 from sklearn.decomposition import PCA
 from pyflann import *
 from tau_flann_pytorch import tolerance
-from merge import merging, merging_combine
+from merge import merging, merging_combine, merging_combine_sum
 from evaluate import convert_clusters_to_label
 
-def FACTO(features, gpu, metric="cosine", method = "OR", no_singleton=False):
+def FACTO(features, gpu, metric="SUM", method = "SUM", no_singleton=False):
     if features.shape[1] > 128:
         pca = PCA(n_components=128, whiten=False)
         pca.fit(features)
@@ -23,6 +23,8 @@ def FACTO(features, gpu, metric="cosine", method = "OR", no_singleton=False):
     # Get threshold
     if metric == "cosine+euclidean":
         estimated_gap_cos, estimated_gap_eu, nearest_points_cos, nearest_points_eu, init_length_cos, init_length_eu, nearest_cluster_with_distance_round_1_cos, nearest_cluster_with_distance_round_1_eu, nearest_points_dis_cos, nearest_points_dis_eu = tolerance(features, gpu, metric)
+    elif metric == "SUM":
+        estimated_gap, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis, max_eu = tolerance(features, gpu, metric)
     else:
         estimated_gap, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis = tolerance(features, gpu, metric)
     ################################################################################################
@@ -69,6 +71,7 @@ def FACTO(features, gpu, metric="cosine", method = "OR", no_singleton=False):
                 for m, n in enumerate(nearest_cluster):
                     merging_list.add(tuple((m, n)))
                 #print(merging_list)
+
             else:
                 nearest_cluster_with_distance = nearest_cluster_with_distance_round_1
                 nearest_cluster = []
@@ -95,13 +98,9 @@ def FACTO(features, gpu, metric="cosine", method = "OR", no_singleton=False):
         else:
             centroids = [np.mean([points[j] for j in i], axis=0) for i in clusters]
             X = np.array(centroids)
-
-
             ###############################################################################################
-
             tra = Normalizer(norm='l2').fit(X)
             X = tra.transform(X)
-
             flann = FLANN()
             result, result_dis = flann.nn(X, X, num_neighbors=2, algorithm="kdtree", trees=8, checks=128)
             nearest_cluster = np.array([cls[1] for cls in result])
@@ -135,8 +134,11 @@ def FACTO(features, gpu, metric="cosine", method = "OR", no_singleton=False):
         old_clusters = set()
         for i in clusters:
             old_clusters.add(tuple(i))  # find old (last round) clusters
+        #print("Merging")
         if metric == "cosine+euclidean":
             clusters = merging_combine(merging_list, clusters, estimated_gap_cos, estimated_gap_eu, features, round, metric, method)
+        elif metric == "SUM":
+            clusters = merging_combine_sum(merging_list, clusters, estimated_gap, features, max_eu)
         else:
             clusters = merging(merging_list, clusters, estimated_gap, features, round, metric)
         # rembember old and new clusters
