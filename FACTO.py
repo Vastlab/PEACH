@@ -13,7 +13,8 @@ from pyflann import *
 from tau_flann_pytorch import tolerance
 from merge import merging, merging_combine, merging_combine_sum
 from evaluate import convert_clusters_to_label
-
+from sklearn.neighbors import NearestNeighbors
+from clustering import KNN
 
 def cosine(x, y):
     x = nn.functional.normalize(x, dim=1)
@@ -115,14 +116,27 @@ def FACTO(features, gpu, metric="SUM", method = "SUM", no_singleton=False):
             X = np.array(centroids)
             ###############################################################################################
 
-
+            """
             tra = Normalizer(norm='l2').fit(X)
             X = tra.transform(X)
             flann = FLANN()
-            result, result_dis = flann.nn(X, X, num_neighbors=2, algorithm="kdtree", trees=8, checks=128)
+            result, result_dis = flann.nn(X, X, num_neighbors=2, algorithm="kdtree", trees=32, checks=512)
             nearest_cluster = np.array([cls[1] for cls in result])
-            nearest_cluster_dis = np.array([dis[1] for dis in result_dis])
+            nearest_cluster_dis = np.array([dis[1] for dis in result_dis])"""
 
+            X = torch.Tensor(X)
+            if metric == "cosine":
+                dist = cosine(X, X)
+            elif metric == "euclidean":
+                dist = euclidean(X, X)
+            elif metric == "SUM":
+                eu_dis = euclidean(X, X)
+                #dist = cosine(X, X) + eu_dis / torch.max(eu_dis)
+                dist = cosine(X, X) + eu_dis / max_eu
+            knn = dist.topk(2, largest=False)
+            result = knn.indices.cpu().numpy()
+            nearest_cluster = np.array([cls[1] for cls in result])
+            nearest_cluster_dis = [dist[i][j] for i, j in enumerate(nearest_cluster)]
 
 
             nearest_cluster_with_distance = [[j, [k, i]] for k, (i, j) in

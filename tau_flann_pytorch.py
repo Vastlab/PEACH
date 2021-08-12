@@ -29,46 +29,39 @@ def euclidean(x, y):
 ################################################################
 def tolerance(features, gpu, metric):
     # Use up to 20000 simples to compute tau
-    if len(features) >= 20000:
-        select_features = np.array(random.choices(features, k = 20000))
-    else:
-        select_features = features
+    #if len(features) >= 20000:
+    #    select_features = np.array(random.choices(features, k = 20000))
+    #else:
+    #    select_features = features
+    select_features = features
 
 ############################################
-
-    #tra = Normalizer(norm='l2').fit(select_features)
-    #select_features = tra.transform(select_features)
-
     torch.cuda.set_device(gpu)
-    X_global = torch.tensor(select_features).cuda()
-    Y_global = torch.tensor(select_features).cuda()
-    if metric == "cosine":
-        distances = cosine(X_global, Y_global)
-        distances = distances.cpu().numpy()
-        tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis = compute_tau(distances, features, metric, "NA", 0)
+
+    if metric == "cosine" or metric == "euclidean":
+
+        X = torch.Tensor(features)
+        dist = cosine(X, X)
+
+        #tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis = compute_tau(distances, features, metric, "NA", 0, total_distances, max_dis)
+        tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis = compute_tau(
+            dist, features, metric, "NA", 0)
         return tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis
-    elif metric == "euclidean":
-        distances = euclidean(X_global, Y_global)
-        distances = distances.cpu().numpy()
-        tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis = compute_tau(distances, features, metric, "NA", 0)
-        return tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis
+
     elif metric == "cosine+euclidean":
-        cosine_distances = cosine(X_global, Y_global)
-        cosine_distances = cosine_distances.cpu().numpy()
-        euclidean_distances = euclidean(X_global, Y_global)
-        euclidean_distances = euclidean_distances.cpu().numpy()
+        X = torch.Tensor(features)
+        cosine_distances = cosine(X, X)
+        euclidean_distances = euclidean(X, X)
         tau_cos, nearest_points_cos, init_length_cos, nearest_cluster_with_distance_round_1_cos, nearest_points_dis_cos = compute_tau(cosine_distances, features, "cosine", "NA", 0)
         tau_eu, nearest_points_eu, init_length_eu, nearest_cluster_with_distance_round_1_eu, nearest_points_dis_eu = compute_tau(euclidean_distances, features, "euclidean", "NA", 0)
         return tau_cos,tau_eu,nearest_points_cos,nearest_points_eu,init_length_cos,init_length_eu,nearest_cluster_with_distance_round_1_cos,nearest_cluster_with_distance_round_1_eu,nearest_points_dis_cos,nearest_points_dis_eu
     elif metric == "SUM":
-        cosine_distances = cosine(X_global, Y_global)
-        cosine_distances = cosine_distances.cpu().numpy()
-        euclidean_distances = euclidean(X_global, Y_global)
-        euclidean_distances = euclidean_distances.cpu().numpy()
-        #print(euclidean_distances)
-        max_eu = np.max(euclidean_distances)
-        #print(max_eu)
+        X = torch.Tensor(features)
+        cosine_distances = cosine(X, X)
+        euclidean_distances = euclidean(X, X)
+        max_eu = torch.max(euclidean_distances)
         euclidean_distances = euclidean_distances / max_eu
+
         tau_cos, nearest_points_cos, init_length_cos, nearest_cluster_with_distance_round_1_cos, nearest_points_dis_cos = compute_tau(
             cosine_distances, features, "cosine", "SUM", 0)
         tau_eu, nearest_points_eu, init_length_eu, nearest_cluster_with_distance_round_1_eu, nearest_points_dis_eu = compute_tau(
@@ -79,25 +72,14 @@ def tolerance(features, gpu, metric):
         #return tau, nearest_points_eu, init_length_eu, nearest_cluster_with_distance_round_1_eu, nearest_points_dis_eu
 
 def compute_tau(distances, features, metric, method, max_eu):
-    #distances = distances.cpu().numpy()
-    total_distances = []
-    max_dis = []
-    total_distances.append(np.median(distances))
-    max_dis.append(np.max(distances))
-    #del X_global, Y_global
     ################################################
-    avg_all_distances = np.median(total_distances)
-
-
-    tra = Normalizer(norm='l2').fit(features)
-    X = tra.transform(features)
-    # Use FLANN to find KNN
-    flann = FLANN()
-    result, result_dis = flann.nn(X, X, num_neighbors=2, algorithm="kdtree", trees=8, checks=128)
-
-
+    avg_all_distances = torch.median(distances).cpu().numpy()
+    max_dis = torch.max(distances).cpu().numpy()
+    knn = distances.topk(2, largest=False)
+    result = knn.indices.cpu().numpy()
     nearest_cluster = np.array([cls[1] for cls in result])
-    nearest_points_dis = np.array([dis[1] for dis in result_dis])
+    nearest_points_dis = [distances[i][j] for i, j in enumerate(nearest_cluster)]
+
     nearest_points = nearest_cluster
     nearest_cluster_with_distance_round_1 = [[j, [k, i]] for k, (i, j) in enumerate(zip(nearest_cluster, nearest_points_dis))]
     nearest_cluster_with_distance_round_1 = sorted(nearest_cluster_with_distance_round_1)
@@ -122,7 +104,7 @@ def compute_tau(distances, features, metric, method, max_eu):
     init_length = N
     init_features = [[features[i[0]], features[i[1]]] for i in init] #features of initial groups.
     ######################################################################################################
-    centroids = [np.mean(i,axis=0) for i in init_features]
+    centroids = [np.mean(i, axis=0) for i in init_features]
     tra = Normalizer(norm='l2').fit(centroids)
     X = tra.transform(centroids)
     flann = FLANN()
@@ -146,14 +128,15 @@ def compute_tau(distances, features, metric, method, max_eu):
             gxs.append(gx)
     if method == "SUM" and metric == "euclidean":
         gxs = np.array(gxs)
-        gxs = gxs / max_eu
+        #gxs = gxs / max(gxs)
+        gxs = gxs / max_eu.cpu().numpy()
         #tau = get_tau(torch.Tensor(nearest_points_dis),1,'name',tailfrac=1,pcent=.999,usehigh=True,maxmodeerror=1)* avg_all_distances / max(max_dis)
-        tau = np.max(gxs) * avg_all_distances / max(max_dis)
+        tau = np.max(gxs) * avg_all_distances / max_dis
         print("Tau done")
         return tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis
     else:
         # tau = get_tau(torch.Tensor(nearest_points_dis),1,'name',tailfrac=1,pcent=.999,usehigh=True,maxmodeerror=1)* avg_all_distances / max(max_dis)
-        tau = max(gxs) * avg_all_distances / max(max_dis)
+        tau = max(gxs) * avg_all_distances / max_dis
         print("Tau done")
         return tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis
 
