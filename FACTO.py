@@ -9,12 +9,12 @@ import torch
 import torch.nn as nn
 from sklearn.preprocessing import Normalizer
 from sklearn.decomposition import PCA
-from pyflann import *
-from tau_flann_pytorch import tolerance
+#from pyflann import *
+from tau_flann_pytorch import tolerance, gpu_torch_distances
 from merge import merging, merging_combine, merging_combine_sum
 from evaluate import convert_clusters_to_label
 from sklearn.neighbors import NearestNeighbors
-from clustering import KNN
+#from clustering import KNN
 
 def cosine(x, y):
     x = nn.functional.normalize(x, dim=1)
@@ -23,16 +23,16 @@ def cosine(x, y):
     distances = 1 - similarity
     return distances
 
-
 def euclidean(x, y):
     distances = torch.cdist(x, y, p=2.0, compute_mode='donot_use_mm_for_euclid_dist')
     return distances
 
-def FACTO(features, gpu, metric="SUM", method = "SUM", no_singleton=False):
+
+def FACTO(features, gpu, metric="cosine", batch_size = 20000, no_singleton=False):
     torch.cuda.set_device(gpu)
     if features.shape[1] > 128:
         try:
-            pca = PCA(n_components=128, whiten=False)
+            pca = PCA(n_components=128, whiten=True)
             pca.fit(features)
             features = pca.transform(features)
         except:
@@ -42,11 +42,11 @@ def FACTO(features, gpu, metric="SUM", method = "SUM", no_singleton=False):
     length = len(points)
     # Get threshold
     if metric == "cosine+euclidean":
-        estimated_gap_cos, estimated_gap_eu, nearest_points_cos, nearest_points_eu, init_length_cos, init_length_eu, nearest_cluster_with_distance_round_1_cos, nearest_cluster_with_distance_round_1_eu, nearest_points_dis_cos, nearest_points_dis_eu = tolerance(features, gpu, metric)
+        estimated_gap_cos, estimated_gap_eu, nearest_points_cos, nearest_points_eu, init_length_cos, init_length_eu, nearest_cluster_with_distance_round_1_cos, nearest_cluster_with_distance_round_1_eu, nearest_points_dis_cos, nearest_points_dis_eu = tolerance(features, gpu, metric, batch_size)
     elif metric == "SUM":
-        estimated_gap, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis, max_eu = tolerance(features, gpu, metric)
+        estimated_gap, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis, max_eu = tolerance(features, gpu, metric, batch_size)
     else:
-        estimated_gap, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis = tolerance(features, gpu, metric)
+        estimated_gap, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis = tolerance(features, gpu, metric, batch_size)
     ################################################################################################
     clusters = [[i] for i in range(length)]
 
@@ -115,24 +115,11 @@ def FACTO(features, gpu, metric="SUM", method = "SUM", no_singleton=False):
             centroids = [np.mean([points[j] for j in i], axis=0) for i in clusters]
             X = np.array(centroids)
             ###############################################################################################
-
-            """
-            tra = Normalizer(norm='l2').fit(X)
-            X = tra.transform(X)
-            flann = FLANN()
-            result, result_dis = flann.nn(X, X, num_neighbors=2, algorithm="kdtree", trees=32, checks=512)
-            nearest_cluster = np.array([cls[1] for cls in result])
-            nearest_cluster_dis = np.array([dis[1] for dis in result_dis])"""
-
-            X = torch.Tensor(X)
-            if metric == "cosine":
-                dist = cosine(X, X)
-            elif metric == "euclidean":
-                dist = euclidean(X, X)
-            elif metric == "SUM":
-                eu_dis = euclidean(X, X)
-                #dist = cosine(X, X) + eu_dis / torch.max(eu_dis)
-                dist = cosine(X, X) + eu_dis / max_eu
+            if metric == "SUM":
+                eu_dis = gpu_torch_distances(X, batch_size, "euclidean")
+                dist = gpu_torch_distances(X, batch_size, "cosine") + eu_dis / max_eu
+            else:
+                dist = gpu_torch_distances(X, batch_size, metric)
             knn = dist.topk(2, largest=False)
             result = knn.indices.cpu().numpy()
             nearest_cluster = np.array([cls[1] for cls in result])
@@ -194,7 +181,6 @@ def FACTO(features, gpu, metric="SUM", method = "SUM", no_singleton=False):
             true_clusters[index].extend(single)
         clusters = true_clusters
 
-
     labels = np.array(convert_clusters_to_label(clusters, length))
     print("FACTO Done")
     true_clusters = [i for i in clusters if len(i) != 1]
@@ -203,21 +189,18 @@ def FACTO(features, gpu, metric="SUM", method = "SUM", no_singleton=False):
     return labels
 
 
+
 def takeFirst(elem):
     return elem[0]
-
 
 def takeSecond(elem):
     return elem[1]
 
-
 def takeThird(elem):
     return elem[2]
 
-
 def takeFourth(elem):
     return elem[3]
-
 
 def thread(threads):
     for t in threads:
