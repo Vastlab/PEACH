@@ -28,7 +28,7 @@ def euclidean(x, y):
     return distances
 
 
-def FACTO(features, gpu, metric="cosine", batch_size = 20000, no_singleton=False):
+def FACTO(features, gpu, metric="cosine", batch_size = 4096, no_singleton=False):
     torch.cuda.set_device(gpu)
     if features.shape[1] > 128:
         try:

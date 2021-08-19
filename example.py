@@ -21,7 +21,7 @@ subjects = [int(target.cpu().numpy()) for data, target in test_loader]
 count = 0
 ##############################
 ######use FACTO###############
-result = FACTO(features, 0, no_singleton = False, metric = "cosine") # 0 means GPU0
+result = FACTO(features, 0, no_singleton = False, metric = "cosine", batch_size = 4096) # 0 means GPU0
 
 y_true = np.array(subjects)
 y_pred = np.array(result)
