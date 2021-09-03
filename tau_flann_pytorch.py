@@ -44,18 +44,16 @@ def gpu_torch_distances(data, batch_size, metric):
 ################################################################
 ##################Tau-Simple###################################
 ################################################################
-def tolerance(features, gpu, metric, batch_size):
-    select_features = features
+def tolerance(features, gpu, metric, batch_size, EVT):
+    # Use up to 50000 simples to compute tau
+    if len(features) >= 50000:
+        features = np.array(random.choices(features, k = 50000))
 ############################################
     if metric == "cosine" or metric == "euclidean":
         dist = gpu_torch_distances(features, batch_size, metric)
-        """
-        X = torch.Tensor(features)
-        dist = cosine(X, X)
-        """
         #tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis = compute_tau(distances, features, metric, "NA", 0, total_distances, max_dis)
         tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis = compute_tau(
-            dist, features, metric, "NA", 0, batch_size)
+            dist, features, metric, "NA", 0, batch_size, EVT)
         return tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis
     elif metric == "SUM":
         X = torch.Tensor(features)
@@ -65,15 +63,15 @@ def tolerance(features, gpu, metric, batch_size):
         euclidean_distances = euclidean_distances / max_eu
 
         tau_cos, nearest_points_cos, init_length_cos, nearest_cluster_with_distance_round_1_cos, nearest_points_dis_cos = compute_tau(
-            cosine_distances, features, "cosine", "SUM", 0, batch_size)
+            cosine_distances, features, "cosine", "SUM", 0, batch_size, EVT)
         tau_eu, nearest_points_eu, init_length_eu, nearest_cluster_with_distance_round_1_eu, nearest_points_dis_eu = compute_tau(
-            euclidean_distances, features, "euclidean", "SUM", max_eu, batch_size)
+            euclidean_distances, features, "euclidean", "SUM", max_eu, batch_size, EVT)
         tau = tau_cos + tau_eu
 
         return tau, nearest_points_cos, init_length_cos, nearest_cluster_with_distance_round_1_cos, nearest_points_dis_cos, max_eu
         #return tau, nearest_points_eu, init_length_eu, nearest_cluster_with_distance_round_1_eu, nearest_points_dis_eu
 
-def compute_tau(distances, features, metric, method, max_eu, batch_size):
+def compute_tau(distances, features, metric, method, max_eu, batch_size, EVT):
     ################################################
     avg_all_distances = torch.median(distances).cpu().numpy()
     max_dis = torch.max(distances).cpu().numpy()
@@ -129,16 +127,19 @@ def compute_tau(distances, features, metric, method, max_eu, batch_size):
             gxs.append(gx)
     if method == "SUM" and metric == "euclidean":
         gxs = np.array(gxs)
-        #gxs = gxs / max(gxs)
         gxs = gxs / max_eu.cpu().numpy()
-        #tau = get_tau(torch.Tensor(nearest_points_dis),1,'name',tailfrac=1,pcent=.999,usehigh=True,maxmodeerror=1)* avg_all_distances / max(max_dis)
-        tau = np.max(gxs) * avg_all_distances / max_dis
-        print("Tau done")
+        if EVT == True:
+            tau = get_tau(torch.Tensor(nearest_points_dis),1,'FACTO',tailfrac=1,pcent=.999,usehigh=True,maxmodeerror=1)* avg_all_distances / max_dis
+        else:
+            tau = np.max(gxs) * avg_all_distances / max_dis
+        print("Tau done: ", tau)
         return tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis
     else:
-        # tau = get_tau(torch.Tensor(nearest_points_dis),1,'name',tailfrac=1,pcent=.999,usehigh=True,maxmodeerror=1)* avg_all_distances / max(max_dis)
-        tau = max(gxs) * avg_all_distances / max_dis
-        print("Tau done")
+        if EVT == True:
+            tau = get_tau(torch.Tensor(nearest_points_dis),1,'FACTO',tailfrac=1, pcent=.999,usehigh=True,maxmodeerror=1) * avg_all_distances / max_dis
+        else:
+            tau = max(gxs) * avg_all_distances / max_dis
+        print("Tau done: ", tau)
         return tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis
 
     
