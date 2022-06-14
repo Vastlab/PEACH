@@ -6,7 +6,7 @@ t0 = time.time()
 features = np.random.rand(5000,3072)
 
 gpu = 0
-result = FACTO(features, gpu, no_singleton = False) # 0 means GPU0
+result = PEACH(features, gpu, no_singleton = False) # 0 means GPU0
 
 
 print(result)
