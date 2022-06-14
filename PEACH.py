@@ -28,7 +28,7 @@ def euclidean(x, y):
     return distances
 
 
-def FACTO(features, gpu, metric="cosine", batch_size = 4096, no_singleton=False, evt=False):
+def PEACH(features, gpu, metric="cosine", batch_size = 4096, no_singleton=False, evt=False):
     torch.cuda.set_device(gpu)
     if features.shape[1] > 128:
         try:
@@ -39,7 +39,7 @@ def FACTO(features, gpu, metric="cosine", batch_size = 4096, no_singleton=False,
             pass
     points = features
     #print("PCA DIM:", features.shape[1])
-    print("FACTO Start")
+    print("PEACH Start")
     length = len(points)
     # Get threshold
     if metric == "SUM":
@@ -149,7 +149,7 @@ def FACTO(features, gpu, metric="cosine", batch_size = 4096, no_singleton=False,
         clusters = true_clusters
 
     labels = np.array(convert_clusters_to_label(clusters, length))
-    print("FACTO Done")
+    print("PEACH Done")
     true_clusters = [i for i in clusters if len(i) != 1]
     single = len(clusters) - len(true_clusters)
     print("True Clusters: ", len(true_clusters), "Singletons: ", single)
