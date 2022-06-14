@@ -1,5 +1,5 @@
-# FACTO
-FACTO Autonomous Clustering
+# PEACH
+PEACH Autonomous Clustering
 
 Based on Pytorch and Flann
 
