@@ -13,4 +13,3 @@ Set "no_singleton = True" will cluster all samples (and take longer).
 
 Set metric = "euclidean" will use Euclidean distance, default is Cosine.
 
-Computing Cost: Cluster whole ImageNet2021 within 30 mins on single TITAN V
