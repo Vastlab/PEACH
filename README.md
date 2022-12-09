@@ -10,7 +10,7 @@ We show how our novel threshold selection can be applied to both classic agglome
 
 ![peach_paper](https://user-images.githubusercontent.com/20711687/206747297-171a1e57-c69b-49f2-8618-8bafc1f562df.jpg)
 
-This figure shows the overall pipeline of PEACH. First, we extract deep features, then we compute the initial pairs, median\{d({\cal S})\} and max\{d({\cal S})\} for the EVT Estimation to compute the threshold $\tau_r$ / $\tau_w$. Next, we use the nearest neighbors to generate initial clusters and the $\tau_r$ / $\tau_w$ will be used for merging to obtain final clustered data.
+This figure shows the overall pipeline of PEACH. First, we extract deep features, then we compute the initial pairs, $median\{d({\cal S})\}$ and max\{d({\cal S})\} for the EVT Estimation to compute the threshold $\tau_r$ / $\tau_w$. Next, we use the nearest neighbors to generate initial clusters and the $\tau_r$ / $\tau_w$ will be used for merging to obtain final clustered data.
 
 
 # Usuage
