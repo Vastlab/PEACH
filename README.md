@@ -7,8 +7,7 @@ PEACH clustering presents an Extreme Value Theory-based approach to threshold se
 We show how our novel threshold selection can be applied to both classic agglomerative clustering and the more recent FINCH (First Integer Neighbor Clustering Hierarchy) algorithm. Our evaluation utilizes over a dozen different large-scale vision datasets/subsets, including multiple face-clustering datasets and ImageNet for both in-domain and, more importantly, out-of-domain object clustering. Across  multiple deep features clustering tasks with very different characteristics, our novel automated threshold selection performs well, often outperforming state-of-the-art clustering techniques even when they select parameters on the test set.
 
 # License
-This is release for non-commerical use with attribution (CC BY-NC-ND 4.0 https://creativecommons.org/licenses/by-nc-nd/4.0/) and 
-This algorith/code is patent-pending.  Those interested in commercial use should contact Dr. T. Boult
+This is release for non-commerical use with attribution (CC BY-NC-ND 4.0 https://creativecommons.org/licenses/by-nc-nd/4.0/), and is provided AS-IS with no warranty of any kind.  This code embodies a patent-pending transformation of distances into clusters; those interested in commercial use should contact Dr. T. Boult
 For attribtuion please cite  
 @article{li2022agglomerative,
   title={Agglomerative Clustering with Threshold Optimization via Extreme Value Theory},
