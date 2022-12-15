@@ -10,9 +10,7 @@ We show how our novel threshold selection can be applied to both classic agglome
 This is release for non-commerical use with attribution (CC BY-NC-ND 4.0 https://creativecommons.org/licenses/by-nc-nd/4.0/), and is provided AS-IS with no warranty of any kind.  This code embodies a patent-pending transformation of distances into clusters; those interested in commercial use should contact Dr. T. Boult
 For attribtuion please cite :
 
-     @article{li2022agglomerative,   title={Agglomerative Clustering with Threshold Optimization via Extreme Value Theory},
-  author={Li, Chunchun and G{\"u}nther, Manuel and Dhamija, Akshay Raj and Cruz, Steve and Jafarzadeh, Mohsen and Ahmad, Touqeer and Boult, Terrance E},
-  journal={Algorithms},   volume={15},   number={5},   pages={170},   year={2022},   publisher={MDPI} } 
+     @article{li2022agglomerative,   title={Agglomerative Clustering with Threshold Optimization via Extreme Value Theory},   author={Li, Chunchun and G{\"u}nther, Manuel and Dhamija, Akshay Raj and Cruz, Steve and Jafarzadeh, Mohsen and Ahmad, Touqeer and Boult, Terrance E},   journal={Algorithms},   volume={15},   number={5},   pages={170},   year={2022},   publisher={MDPI} } 
   
   or one of our later works if combining it with them.in your publications if it helps your research::
 
