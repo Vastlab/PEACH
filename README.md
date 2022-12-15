@@ -12,8 +12,7 @@ For attribtuion please cite :
 
      @article{li2022agglomerative,   title={Agglomerative Clustering with Threshold Optimization via Extreme Value Theory},   author={Li, Chunchun and G{\"u}nther, Manuel and Dhamija, Akshay Raj and Cruz, Steve and Jafarzadeh, Mohsen and Ahmad, Touqeer and Boult, Terrance E},   journal={Algorithms},   volume={15},   number={5},   pages={170},   year={2022},   publisher={MDPI} } 
   
-  or one of our later works if combining it with them.in your publications if it helps your research::
-
+  or one of our later works if combining it with them.  
 
 
 # System Overview
