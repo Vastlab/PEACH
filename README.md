@@ -29,6 +29,8 @@ Uses sode from Pytorch and Flann
 Requirement: Python3, Pytorch, PyFlann, Scikit-learn, SciPy.
 
 Python Flann: "pip install pyflann-py3"
+then
+pip install git+https://github.com/Vastlab/PEACH.git
 
 Example MNIST: "python example.py" 
 
