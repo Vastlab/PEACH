@@ -8,5 +8,5 @@ setup(name='PEACH',
       author='Chunchun Li ',
       author_email='cli@vast.uccs.edu',
       url='https://github.com/Vastlab/PEACH/',
-      packages=['PEACH'],
+      py_modules = ['PEACH', 'tau_flann_pytorch','weibull','merge','evaluate']
      )
