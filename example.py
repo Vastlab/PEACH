@@ -1,4 +1,4 @@
-from FACTO import FACTO
+from PEACH import PEACH
 import numpy as np
 import h5py
 import torch
