@@ -1,7 +1,7 @@
 import numpy as np
 import os, sys
 import scipy
-import random
+import random,math
 import time
 import collections
 import threading
@@ -30,6 +30,9 @@ def euclidean(x, y):
 
 def PEACH(features, gpu, metric="cosine", batch_size = 4096, no_singleton=False, evt=False):
     torch.cuda.set_device(gpu)
+    print("Processing Data")
+    features = np.array(features)
+    features = np.nan_to_num(features)# Hold NaN
     if features.shape[1] > 128:
         try:
             pca = PCA(n_components=128, whiten=True)
