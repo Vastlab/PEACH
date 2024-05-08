@@ -143,7 +143,7 @@ def PEACH(features, gpu, metric="cosine", batch_size = 4096, no_singleton=False,
         singletons = [k for k in clusters if len(k) == 1]
         centroids = [np.mean(cluster) for cluster in true_clusters]
         for single in singletons:
-            dis = [scipy.spatial.distance.cosine(single, centroid) for centroid_id, centroid in enumerate(centroids)]
+            dis = [scipy.spatial.distance.cosine(np.array(single).reshape(-1), np.array(centroid).reshape(-1)) for centroid_id, centroid in enumerate(centroids)]
             index = np.argsort(dis)[0]
             true_clusters[index].extend(single)
         clusters = true_clusters
@@ -152,7 +152,7 @@ def PEACH(features, gpu, metric="cosine", batch_size = 4096, no_singleton=False,
     print("PEACH Done")
     true_clusters = [i for i in clusters if len(i) != 1]
     single = len(clusters) - len(true_clusters)
-    print("True Clusters: ", len(true_clusters), "Singletons: ", single)
+    print("True Clusters Detected: ", len(true_clusters), "Singletons: ", single)
     return labels
 
 

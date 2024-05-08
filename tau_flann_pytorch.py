@@ -29,9 +29,9 @@ def gpu_torch_distances(data, batch_size, metric):
     batch_size = batch_size
     mutilple_data = [data[i * batch_size:(i + 1) * batch_size] for i in
                          range((len(data) + batch_size - 1) // batch_size)]
-    Y_global = torch.tensor(data).cuda()
+    Y_global = torch.tensor(np.array(data)).cuda()
     for i, chunk1 in enumerate(mutilple_data):
-        X_global = torch.tensor(chunk1).cuda()
+        X_global = torch.tensor(np.array(chunk1)).cuda()
         if metric == "cosine":
             dis = cosine(X_global, Y_global)
         elif metric == "euclidean":
@@ -117,8 +117,8 @@ def compute_tau(distances, features, metric, method, max_eu, batch_size, EVT):
     for pair1, pair2 in nearest_init_combo:
         features0 = [features[k] for k in pair1] #extract features of cluster0
         features1 = [features[k] for k in pair2] #extract features of cluster1
-        centroid0 = np.mean(features0, axis=0) # Get controid of cluster0
-        centroid1 = np.mean(features1, axis=0) # Get controid of cluster1
+        centroid0 = np.mean(features0, axis=0).reshape(-1) # Get controid of cluster0
+        centroid1 = np.mean(features1, axis=0).reshape(-1) # Get controid of cluster1
         if metric == "cosine":
             gx = scipy.spatial.distance.cosine(centroid0, centroid1)
             gxs.append(gx)
@@ -129,17 +129,17 @@ def compute_tau(distances, features, metric, method, max_eu, batch_size, EVT):
         gxs = np.array(gxs)
         gxs = gxs / max_eu.cpu().numpy()
         if EVT == True:
-            tau = get_tau(torch.Tensor(nearest_points_dis),1,'FACTO',tailfrac=1,pcent=.999,usehigh=True,maxmodeerror=1)* avg_all_distances / max_dis
+            tau = get_tau(torch.Tensor(nearest_points_dis),1,'PEACH',tailfrac=1,pcent=.999,usehigh=True,maxmodeerror=1)* avg_all_distances / max_dis
         else:
             tau = np.max(gxs) * avg_all_distances / max_dis
-        print("Tau done: ", tau)
+        print("Tau Detected: ", tau)
         return tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis
     else:
         if EVT == True:
-            tau = get_tau(torch.Tensor(nearest_points_dis),1,'FACTO',tailfrac=1, pcent=.999,usehigh=True,maxmodeerror=1) * avg_all_distances / max_dis
+            tau = get_tau(torch.Tensor(nearest_points_dis),1,'PEACH',tailfrac=1, pcent=.999,usehigh=True,maxmodeerror=1) * avg_all_distances / max_dis
         else:
             tau = max(gxs) * avg_all_distances / max_dis
-        print("Tau done: ", tau)
+        print("Tau Detected: ", tau)
         return tau, nearest_points, init_length, nearest_cluster_with_distance_round_1, nearest_points_dis
 
     

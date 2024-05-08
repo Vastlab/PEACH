@@ -15,8 +15,8 @@ def merging(merging_list, clusters, init_tau, features, cluster_round, metric):
         
         #########################################################################
 
-        centroid0 = np.mean(features0, axis=0) # Get controid of cluster0
-        centroid1 = np.mean(features1, axis=0) # Get controid of cluster1
+        centroid0 = np.mean(features0, axis=0).reshape(-1) # Get controid of cluster0
+        centroid1 = np.mean(features1, axis=0).reshape(-1) # Get controid of cluster1
 
         if metric == "cosine":
             gap = scipy.spatial.distance.cosine(centroid0, centroid1)
@@ -42,8 +42,8 @@ def merging_combine(merging_list, clusters, tau, tau1, features, cluster_round, 
             features0 = [features[k] for k in cluster0]  # extract features of cluster0
             features1 = [features[k] for k in cluster1]  # extract features of cluster1
             #########################################################################
-            centroid0 = np.mean(features0, axis=0)  # Get controid of cluster0
-            centroid1 = np.mean(features1, axis=0)  # Get controid of cluster1
+            centroid0 = np.mean(features0, axis=0).reshape(-1)  # Get controid of cluster0
+            centroid1 = np.mean(features1, axis=0).reshape(-1)  # Get controid of cluster1
             gap_cos = scipy.spatial.distance.cosine(centroid0, centroid1)
             gap_eu = scipy.spatial.distance.euclidean(centroid0, centroid1)
 
@@ -76,8 +76,8 @@ def merging_combine_sum(merging_list, clusters, tau, features, max_eu):
         features0 = [features[k] for k in cluster0]  # extract features of cluster0
         features1 = [features[k] for k in cluster1]  # extract features of cluster1
         #########################################################################
-        centroid0 = np.mean(features0, axis=0)  # Get controid of cluster0
-        centroid1 = np.mean(features1, axis=0)  # Get controid of cluster1
+        centroid0 = np.mean(features0, axis=0).reshape(-1)  # Get controid of cluster0
+        centroid1 = np.mean(features1, axis=0).reshape(-1)  # Get controid of cluster1
         gap_cos = scipy.spatial.distance.cosine(centroid0, centroid1)
         gap_eu = scipy.spatial.distance.euclidean(centroid0, centroid1)
 
