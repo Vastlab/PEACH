@@ -10,7 +10,7 @@ import torch.nn as nn
 from sklearn.preprocessing import Normalizer
 from sklearn.decomposition import PCA
 #from pyflann import *
-from tau_flann_pytorch import tolerance, gpu_torch_distances
+from tau_flann_pytorch import tolerance, gpu_torch_distances, gpu_torch_knn
 from merge import merging, merging_combine, merging_combine_sum
 from evaluate import convert_clusters_to_label
 from sklearn.neighbors import NearestNeighbors
@@ -32,7 +32,7 @@ def PEACH(features, gpu, metric="cosine", batch_size = 4096, no_singleton=False,
     torch.cuda.set_device(gpu)
     print("Processing Data")
     features = np.array(features)
-    features = np.nan_to_num(features)# Hold NaN
+    features = np.nan_to_num(features)# Handle NaN
     if features.shape[1] > 128:
         try:
             pca = PCA(n_components=128, whiten=True)
@@ -89,15 +89,14 @@ def PEACH(features, gpu, metric="cosine", batch_size = 4096, no_singleton=False,
             X = np.array(centroids)
             ###############################################################################################
             if metric == "SUM":
-                eu_dis = gpu_torch_distances(X, batch_size, "euclidean")
-                dist = gpu_torch_distances(X, batch_size, "cosine") + eu_dis / max_eu
+                eu_dis = gpu_torch_knn(X, batch_size, "euclidean")
+                knn, dist = gpu_torch_knn(X, batch_size, "cosine") + eu_dis / max_eu
             else:
-                dist = gpu_torch_distances(X, batch_size, metric)
-            knn = dist.topk(2, largest=False)
-            result = knn.indices.cpu().numpy()
+                knn, dist = gpu_torch_knn(X, batch_size, metric)
+            result = knn
             nearest_cluster = np.array([cls[1] for cls in result])
-            nearest_cluster_dis = [dist[i][j] for i, j in enumerate(nearest_cluster)]
-
+            #nearest_cluster_dis = [dist[i][j] for i, j in enumerate(nearest_cluster)]
+            nearest_cluster_dis = [dist[i][1] for i, j in enumerate(nearest_cluster)]
 
             nearest_cluster_with_distance = [[j, [k, i]] for k, (i, j) in
                                              enumerate(zip(nearest_cluster, nearest_cluster_dis))]
