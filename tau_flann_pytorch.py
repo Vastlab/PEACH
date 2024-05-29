@@ -24,8 +24,29 @@ def euclidean(x, y):
     distances = torch.cdist(x, y, p=2.0, compute_mode='donot_use_mm_for_euclid_dist')
     return distances
 
+def gpu_torch_knn(data, batch_size, metric):
+    dist = []
+    knn_results = []
+    batch_size = batch_size
+    mutilple_data = [data[i * batch_size:(i + 1) * batch_size] for i in
+                         range((len(data) + batch_size - 1) // batch_size)]
+    Y_global = torch.tensor(np.array(data)).cuda()
+    for i, chunk1 in enumerate(mutilple_data):
+        X_global = torch.tensor(np.array(chunk1)).cuda()
+        if metric == "cosine":
+            dis = cosine(X_global, Y_global)
+        elif metric == "euclidean":
+            dis = euclidean(X_global, Y_global)
+        knn = dis.topk(2, largest=False)
+        knn_results.extend(knn.indices.cpu().numpy())
+        dist.extend(knn.values.cpu().numpy())
+    del X_global, Y_global
+
+    return np.array(knn_results), np.array(dist)
+
 def gpu_torch_distances(data, batch_size, metric):
     dist = []
+    knn_results = []
     batch_size = batch_size
     mutilple_data = [data[i * batch_size:(i + 1) * batch_size] for i in
                          range((len(data) + batch_size - 1) // batch_size)]
@@ -39,6 +60,7 @@ def gpu_torch_distances(data, batch_size, metric):
         dist.append(dis.cpu())
     del X_global, Y_global
     dist = torch.cat(dist)
+
     return dist
 
 ################################################################
@@ -77,6 +99,7 @@ def compute_tau(distances, features, metric, method, max_eu, batch_size, EVT):
     max_dis = torch.max(distances).cpu().numpy()
     knn = distances.topk(2, largest=False)
     result = knn.indices.cpu().numpy()
+
     nearest_cluster = np.array([cls[1] for cls in result])
     nearest_points_dis = [distances[i][j] for i, j in enumerate(nearest_cluster)]
 
